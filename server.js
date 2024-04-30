@@ -52,6 +52,7 @@ const uploads = multer({
       // }
 
       // console.log("filee", file);
+      console.log(file.fieldname);
       cb(null, file.fieldname + "-" + file.originalname + ".jpg");
     },
   }),
