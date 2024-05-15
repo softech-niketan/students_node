@@ -91,16 +91,16 @@ const getstudentById = async (req, res) => {
 
 const createStudent = async (req, res) => {
   try {
-    const { name, class_name, date, in_time, webcam } = req.body;
-    if (!name || !class_name || !date || !in_time || !webcam) {
+    const { name, class_name, date, in_time, webcam, user_id } = req.body;
+    if (!name || !class_name || !date || !in_time || !webcam || !user_id) {
       return res.status(500).send({
         success: false,
         messsage: "Please provide all fields",
       });
     }
     const data = await db.query(
-      "INSERT INTO attendance(name, class_name, date, in_time, webcam ) VALUES ( ?, ?, ?, ?, ?)",
-      [name, class_name, date, in_time, webcam]
+      "INSERT INTO attendance(name, class_name, date, in_time, webcam, user_id ) VALUES ( ?, ?, ?, ?, ?, ?)",
+      [name, class_name, date, in_time, webcam, user_id]
     );
     if (!data) {
       return res.status(404).send({
@@ -123,18 +123,98 @@ const createStudent = async (req, res) => {
 };
 //update
 const update = async (req, res) => {
+  //console.log(req);
   try {
-    const studentId = req.params.id;
-    if (!studentId) {
+    const ID = req.body.id;
+    console.log("ID", ID);
+    if (!ID) {
       return res.status(404).send({
         success: false,
         messsage: "invalid id please provoid id",
       });
     }
-    const { name, email, password, class_name } = req.body;
+    const {
+      user_name,
+      user_password,
+      status,
+      email,
+      in_time,
+      date,
+      user_role,
+      total_fees,
+    } = req.body;
     const data = await db.query(
-      "UPDATE students SET name=?, email=?, password=?, class_name=? WHERE id=?",
-      [name, email, password, class_name, studentId]
+      "UPDATE users SET user_name=?, user_password=?, status=?, email=?, in_time=?, date=?, user_role=?, total_fees=? WHERE id=?",
+      [
+        user_name,
+        user_password,
+        status,
+        email,
+        in_time,
+        date,
+        user_role,
+        total_fees,
+        ID,
+      ]
+    );
+    if (!data) {
+      return res.status(500).send({
+        success: false,
+        messsage: "error in update query",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "update student",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in update student api",
+      error,
+    });
+  }
+};
+
+const studentsassignment_remark = async (req, res) => {
+  //console.log(req);
+  try {
+    const ID = req.body.id;
+    console.log("ID", ID);
+    if (!ID) {
+      return res.status(404).send({
+        success: false,
+        messsage: "invalid id please provoid id",
+      });
+    }
+    const {
+      assignment_name,
+      batch_name,
+      upload_url,
+      assignment_description,
+      create_time,
+      create_date,
+      trainer_name,
+      student_name,
+      trainer_remark,
+      remark_description,
+    } = req.body;
+    const data = await db.query(
+      "UPDATE students_assignment SET assignment_name=?, batch_name=?, upload_url=?, assignment_description=?, create_time=?, create_date=?, trainer_name=?, student_name=?, trainer_remark=?, remark_description=? WHERE id=?",
+      [
+        assignment_name,
+        batch_name,
+        upload_url,
+        assignment_description,
+        create_time,
+        create_date,
+        trainer_name,
+        student_name,
+        trainer_remark,
+        remark_description,
+        ID,
+      ]
     );
     if (!data) {
       return res.status(500).send({
@@ -192,6 +272,7 @@ const addusers = async (req, res) => {
       in_time,
       date,
       user_role,
+      total_fees,
     } = req.body;
     if (
       !user_name ||
@@ -200,7 +281,8 @@ const addusers = async (req, res) => {
       !email ||
       !in_time ||
       !date ||
-      !user_role
+      !user_role ||
+      !total_fees
     ) {
       return res.status(500).send({
         success: false,
@@ -208,8 +290,17 @@ const addusers = async (req, res) => {
       });
     }
     const data = await db.query(
-      "INSERT INTO users(user_name, user_password, status, email, in_time, date, user_role ) VALUES ( ?, ?, ?, ?, ?, ?, ?)",
-      [user_name, user_password, status, email, in_time, date, user_role]
+      "INSERT INTO users(user_name, user_password, status, email, in_time, date, user_role, total_fees ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        user_name,
+        user_password,
+        status,
+        email,
+        in_time,
+        date,
+        user_role,
+        total_fees,
+      ]
     );
     if (!data) {
       return res.status(404).send({
@@ -231,9 +322,175 @@ const addusers = async (req, res) => {
   }
 };
 
+const getmyassignment = async (req, res) => {
+  console.log("register", req.query.id);
+  try {
+    const id = req.query.id;
+
+    //console.log("email1", password);
+    const data = await db.query("SELECT * FROM assignment  WHERE id=? ", [id]);
+
+    // const data = await db.query("SELECT * FROM users");
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record ",
+      totalStudent: data[0].length,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const getusersbyemailregister = async (req, res) => {
+  // console.log("register", req)
+  try {
+    email = req.query.email;
+    password = req.query.password;
+    //console.log("email1", password);
+    const data = await db.query("SELECT * FROM users  WHERE email=? ", [
+      req.query.email,
+    ]);
+
+    // const data = await db.query("SELECT * FROM users");
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      djdjd: email,
+      messsage: "all student record ",
+      totalStudent: data[0].length,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+//get user by email in login
+const getusersbyemail = async (req, res) => {
+  try {
+    email = req.query.email;
+    password = req.query.password;
+    //console.log("email1", password);
+    const data = await db.query(
+      "SELECT * FROM users  WHERE email=? AND user_password = ?",
+      [email, password]
+    );
+
+    // const data = await db.query("SELECT * FROM users");
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      djdjd: email,
+      messsage: "all student record ",
+      totalStudent: data[0].length,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+//get user by id
+const getusers_byid = async (req, res) => {
+  try {
+    //id = "1";
+    const data = await db.query("SELECT * FROM users  WHERE id=?", [
+      req.query.id,
+    ]);
+
+    //const data = await db.query("SELECT * FROM users ");
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record ",
+      totalStudent: data[0].length,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const getstudentassign_byid = async (req, res) => {
+  console.log("id", req);
+  try {
+    //id = "1";
+    const data = await db.query(
+      "SELECT * FROM students_assignment  WHERE id=?",
+      [req.query.id]
+    );
+
+    //const data = await db.query("SELECT * FROM users ");
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record ",
+      totalStudent: data[0].length,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
 //get all users
 const getusers = async (req, res) => {
   try {
+    //id = "1";
+    //const data = await db.query("SELECT * FROM users  WHERE id=?", [id]);
+
     const data = await db.query("SELECT * FROM users");
     if (!data) {
       return res.status(404).send({
@@ -270,6 +527,7 @@ const addbatch = async (req, res) => {
       trainer_name,
       start_time,
       end_time,
+      user_id,
     } = req.body;
     if (
       !batch_name ||
@@ -280,7 +538,8 @@ const addbatch = async (req, res) => {
       !date ||
       !trainer_name ||
       !start_time ||
-      !end_time
+      !end_time ||
+      !user_id
     ) {
       return res.status(500).send({
         success: false,
@@ -288,7 +547,7 @@ const addbatch = async (req, res) => {
       });
     }
     const data = await db.query(
-      "INSERT INTO batches(batch_name, batch_type, batch_status, description,in_time, date, trainer_name,  start_time, end_time ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )",
+      "INSERT INTO batches(batch_name, batch_type, batch_status, description,in_time, date, trainer_name,  start_time, end_time, user_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )",
       [
         batch_name,
         batch_type,
@@ -299,6 +558,7 @@ const addbatch = async (req, res) => {
         trainer_name,
         start_time,
         end_time,
+        user_id,
       ]
     );
     if (!data) {
@@ -360,6 +620,7 @@ const addassignment = async (req, res) => {
       trainer_name,
       start_date,
       end_date,
+      user_id,
     } = req.body;
     if (
       !assignment_name ||
@@ -370,15 +631,17 @@ const addassignment = async (req, res) => {
       !create_date ||
       !trainer_name ||
       !start_date ||
-      !end_date
+      !end_date ||
+      !user_id
     ) {
       return res.status(500).send({
         success: false,
         messsage: "Please provide all fields",
       });
     }
+
     const data = await db.query(
-      "INSERT INTO assignment(assignment_name, batch_name, batch_status, assignment_description,create_time, create_date, trainer_name,  start_date, end_date ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )",
+      "INSERT INTO assignment(assignment_name, batch_name, batch_status, assignment_description,create_time, create_date, trainer_name,  start_date, end_date, user_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )",
       [
         assignment_name,
         batch_name,
@@ -389,6 +652,7 @@ const addassignment = async (req, res) => {
         trainer_name,
         start_date,
         end_date,
+        user_id,
       ]
     );
     if (!data) {
@@ -438,35 +702,215 @@ const getassignment = async (req, res) => {
 };
 
 //Add Register login
-
 const register = async (req, res) => {
+  const email = req.body.email;
+  console.log(req.body.email);
   try {
-    const { name, email, password, class_name, in_time, date } = req.body;
-    if (!name || !email || !password || !class_name || !in_time || !date) {
-      return res.status(500).send({
+    const {
+      user_name,
+      email,
+      user_password,
+      status,
+      user_role,
+      class_name,
+      in_time,
+      date,
+      total_fees,
+    } = req.body;
+
+    // Check if all required fields are provided
+    if (
+      !user_name ||
+      !email ||
+      !user_password ||
+      !status ||
+      !user_role ||
+      !class_name ||
+      !in_time ||
+      !date ||
+      !total_fees
+    ) {
+      return res.status(400).send({
         success: false,
-        messsage: "Please provide all fields",
+        message: "Please provide all fields",
       });
     }
+
+    // Check if the email already exists in the database
+
+    // SELECT COUNT(*) AS email_count FROM  users WHERE email = "admin@admin.com";
+    // const emailExists = await db.query(
+    //   "SELECT * FROM users  WHERE email=?",
+    //   [req.query.email]
+    // );
+
+    const emailExists = await db.query(
+      "SELECT COUNT(email) AS email_count FROM  users WHERE email=?",
+      `${email}`
+    );
+
+    console.log("emailExists", emailExists[0][0].email_count);
+    //  const countObj = emailExists[0][0]; // Accessing the first element of the first inner array
+
+    // // Accessing the value of the key 'COUNT(*)' in the object
+    // const countValue = countObj['COUNT(*)'];
+
+    if (emailExists[0][0].email_count > 0) {
+      return res.status(409).send({
+        success: false,
+        message: "Email already exists",
+      });
+    } else {
+      const data = await db.query(
+        "INSERT INTO users(user_name, email, user_password, status, user_role, class_name, in_time, date, total_fees) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          user_name,
+          email,
+          user_password,
+          status,
+          user_role,
+          class_name,
+          in_time,
+          date,
+          total_fees,
+        ]
+      );
+      if (!data) {
+        return res.status(500).send({
+          success: false,
+          message: "Error in insert query",
+        });
+      }
+
+      res.status(201).send({
+        success: true,
+        message: "New student record created",
+      });
+    }
+
+    // If email doesn't exist, insert new data into the database
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in create student API",
+      error: error.message,
+    });
+  }
+};
+
+const register123 = async (req, res) => {
+  console.log(req.body.email);
+  try {
+    const {
+      user_name,
+      email,
+      user_password,
+      status,
+      user_role,
+      class_name,
+      in_time,
+      date,
+    } = req.body;
+
+    // Check if all required fields are provided
+    if (
+      !user_name ||
+      !email ||
+      !user_password ||
+      !status ||
+      !user_role ||
+      !class_name ||
+      !in_time ||
+      !date
+    ) {
+      return res.status(400).send({
+        success: false,
+        message: "Please provide all fields",
+      });
+    }
+
+    // Check if the email already exists in the database
+    // const emailExists = await db.query("SELECT * FROM users WHERE email = ?", [
+    //   req.body.email,
+
+    // ]);
+    // console.log("emailExists", emailExists);
+
+    // if (emailExists.length > 1) {
+    //   return res.status(409).send({
+    //     success: false,
+    //     message: "Email already exists",
+    //   });
+    // }
+    // const email_data = await db.query("SELECT * FROM users  WHERE email=? ", [
+    //   req.query.email,
+    // ]);
+    // console.log(email_data);
+
+    // If email doesn't exist, insert new data into the database
     const data = await db.query(
-      "INSERT INTO students(name, email, password, class_name,in_time, date) VALUES ( ?, ?, ?, ?, ?, ? )",
-      [name, email, password, class_name, in_time, date]
+      "INSERT INTO users(user_name, email, user_password, status, user_role, class_name, in_time, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        user_name,
+        email,
+        user_password,
+        status,
+        user_role,
+        class_name,
+        in_time,
+        date,
+      ]
     );
     if (!data) {
-      return res.status(404).send({
+      return res.status(500).send({
         success: false,
-        messsage: "erro in insert query",
+        message: "Error in insert query",
       });
     }
+
     res.status(201).send({
+      success: true,
+      message: "New student record created",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
       success: false,
-      messsage: "new student create record",
+      message: "Error in create student API",
+      error: error.message,
+    });
+  }
+};
+
+//get My Assignment
+const addStudentAssignment = async (req, res) => {
+  //console.log(req);
+  console.log("iddds", req.params.id);
+  try {
+    const id = req.params.id;
+    if (!id) {
+      return res.status(404).send({
+        success: false,
+        messsage: "invalid student id",
+      });
+    }
+    const data123 = await db.query("SELECT * FROM assignment WHERE id=?", [id]);
+    if (!data123) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record found",
+      });
+    }
+    res.status(200).send({
+      success: false,
+      StudentDetails: data123[0],
     });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      messsage: "error in create student api",
+      messsage: "error in get student bu id api",
       error,
     });
   }
@@ -474,7 +918,8 @@ const register = async (req, res) => {
 
 //Add Students Assignment
 
-const addStudentAssignment = async (req, res) => {
+const addStudentAssignment1 = async (req, res) => {
+  console.log(req.body);
   try {
     const {
       assignment_name,
@@ -485,6 +930,9 @@ const addStudentAssignment = async (req, res) => {
       create_date,
       trainer_name,
       student_name,
+      trainer_remark,
+      remark_description,
+      user_id,
     } = req.body;
     if (
       !assignment_name ||
@@ -494,7 +942,10 @@ const addStudentAssignment = async (req, res) => {
       !create_time ||
       !create_date ||
       !trainer_name ||
-      !student_name
+      !student_name ||
+      !trainer_remark ||
+      !remark_description ||
+      !user_id
     ) {
       return res.status(500).send({
         success: false,
@@ -502,7 +953,7 @@ const addStudentAssignment = async (req, res) => {
       });
     }
     const data = await db.query(
-      "INSERT INTO students_assignment(assignment_name, batch_name, upload_url, assignment_description, create_time, create_date, trainer_name, student_name) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )",
+      "INSERT INTO students_assignment(assignment_name, batch_name, upload_url, assignment_description, create_time, create_date, trainer_name, student_name, trainer_remark, remark_description, user_id) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )",
       [
         assignment_name,
         batch_name,
@@ -512,6 +963,9 @@ const addStudentAssignment = async (req, res) => {
         create_date,
         trainer_name,
         student_name,
+        trainer_remark,
+        remark_description,
+        user_id,
       ]
     );
     console.log(data);
@@ -538,6 +992,10 @@ const addStudentAssignment = async (req, res) => {
 const getStudentAssignment = async (req, res) => {
   try {
     const data = await db.query("SELECT * FROM students_assignment");
+
+    // const data = await db.query(
+    //   "SELECT COUNT(*) AS record_count FROM students_assignment"
+    // );
     if (!data) {
       return res.status(404).send({
         success: false,
@@ -548,6 +1006,7 @@ const getStudentAssignment = async (req, res) => {
       success: true,
       messsage: "all student record ",
       totalStudent: data[0].length,
+
       data: data[0],
     });
   } catch (error) {
@@ -559,6 +1018,499 @@ const getStudentAssignment = async (req, res) => {
     });
   }
 };
+
+const search_studentassign = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+    //  const limit = "5";
+
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    // const data = await db.query(
+    //   `SELECT * FROM students_assignment WHERE trainer_name LIKE '%${searchTerm}%' LIMIT ${limit} OFFSET ${offset}`
+    // );
+    const data = await db.query(`
+    SELECT *, (SELECT COUNT(*) FROM students_assignment WHERE trainer_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%'  OR student_name LIKE '%${searchTerm}%' OR assignment_name LIKE '%${searchTerm}%') as total_count 
+    FROM students_assignment 
+    WHERE trainer_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%' OR student_name LIKE '%${searchTerm}%' OR assignment_name LIKE '%${searchTerm}%'
+    LIMIT ${limit} OFFSET ${offset}
+  `);
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const search_viewassignment = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+    const user_id = req.query.user_id;
+    const user_role = req.query.user_role;
+    console.log("user_role", user_role);
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    // const data = await db.query(
+    //   `SELECT * FROM students_assignment WHERE trainer_name LIKE '%${searchTerm}%' LIMIT ${limit} OFFSET ${offset}`
+    // );
+
+    let data;
+    if (user_role === "admin" || user_role === "student") {
+      data = await db.query(`
+      SELECT *, (SELECT COUNT(*) FROM assignment WHERE assignment_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%'  OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%') as user_count 
+      FROM assignment 
+      WHERE assignment_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%' OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%'
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+    } else {
+      data = await db.query(`
+        SELECT *, 
+            (SELECT COUNT(*) FROM assignment WHERE (assignment_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%' OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%') AND user_id = ${user_id}) as user_count,
+            (SELECT COUNT(*) FROM assignment WHERE assignment_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%' OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%') as total_count 
+        FROM assignment 
+        WHERE (assignment_name LIKE '%${searchTerm}%' OR batch_name LIKE '%${searchTerm}%' OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%') AND user_id = ${user_id}
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+    }
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+      user_count: data[0][0].user_count,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const search_viewbatch = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+    //  const limit = "5";
+
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    // const data = await db.query(
+    //   `SELECT * FROM students_assignment WHERE trainer_name LIKE '%${searchTerm}%' LIMIT ${limit} OFFSET ${offset}`
+    // );
+    const data = await db.query(`
+    SELECT *, (SELECT COUNT(*) FROM batches WHERE batch_name LIKE '%${searchTerm}%' OR batch_type LIKE '%${searchTerm}%'  OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%') as total_count 
+    FROM batches 
+    WHERE batch_name LIKE '%${searchTerm}%' OR batch_type LIKE '%${searchTerm}%' OR trainer_name LIKE '%${searchTerm}%' OR batch_status LIKE '%${searchTerm}%'
+    LIMIT ${limit} OFFSET ${offset}
+  `);
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const search_attendace = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+    const user_id = req.query.user_id;
+    const user_role = req.query.user_role;
+
+    //  const limit = "5";
+
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    // const data = await db.query(
+    //   `SELECT * FROM students_assignment WHERE trainer_name LIKE '%${searchTerm}%' LIMIT ${limit} OFFSET ${offset}`
+    // );
+    let data;
+    if (user_role === "admin") {
+      data = await db.query(`
+  SELECT *, (SELECT COUNT(*) FROM attendance WHERE name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%'  OR date LIKE '%${searchTerm}%' OR in_time LIKE '%${searchTerm}%') as user_count 
+  FROM attendance 
+  WHERE name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR in_time LIKE '%${searchTerm}%'
+  LIMIT ${limit} OFFSET ${offset}
+  `);
+    } else {
+      data = await db.query(`
+      SELECT *, 
+          (SELECT COUNT(*) FROM attendance WHERE (name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR in_time LIKE '%${searchTerm}%') AND user_id = ${user_id}) as user_count,
+          (SELECT COUNT(*) FROM attendance WHERE name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR in_time LIKE '%${searchTerm}%') as total_count 
+      FROM attendance 
+      WHERE (name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR in_time LIKE '%${searchTerm}%') AND user_id = ${user_id}
+      LIMIT ${limit} OFFSET ${offset}
+       `);
+    }
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+
+      user_count: data[0][0].user_count,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const search_user = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+    const user_id = req.query.user_id;
+    const user_role = req.query.user_role;
+
+    //  const limit = "5";
+
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    // const data = await db.query(
+    //   `SELECT * FROM students_assignment WHERE trainer_name LIKE '%${searchTerm}%' LIMIT ${limit} OFFSET ${offset}`
+    // );
+
+    data = await db.query(`
+  SELECT *, (SELECT COUNT(*) FROM users WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%'  OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') as user_count 
+  FROM users 
+  WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%'
+  LIMIT ${limit} OFFSET ${offset}
+  `);
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+
+      user_count: data[0][0].user_count,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const search_user_students = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    //   data = await db.query(`
+    // SELECT *, (SELECT COUNT(*) FROM users WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%'  OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') as user_count
+    // FROM users
+    // WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%'
+    // LIMIT ${limit} OFFSET ${offset}
+    // `);
+
+    data = await db.query(`
+    SELECT *, 
+        (SELECT COUNT(*) FROM users WHERE (user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') AND user_role = 'student') as user_count,
+        (SELECT COUNT(*) FROM users WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') as total_count 
+    FROM users 
+    WHERE (user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') AND user_role = 'student'
+    LIMIT ${limit} OFFSET ${offset}
+     `);
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+
+      user_count: data[0][0].user_count,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+
+const search_view_installment_fees = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const searchTerm = req.query.id;
+    // const searchTerm = "sk";
+    const currentPage = req.query.currentPage;
+    console.log("currentPage24", currentPage);
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+
+    //   const offset = "0";
+    console.log(offset);
+    console.log(limit);
+    console.log("searchTerm", searchTerm);
+
+    // data = await db.query(`
+    // SELECT  *, (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%'  OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%') as user_count
+    // FROM students_fees
+    // WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%'
+    // LIMIT ${limit} OFFSET ${offset}
+    // `);
+    data = await db.query(`
+    SELECT   *,
+        (SELECT COUNT(*) 
+         FROM students_fees 
+         WHERE student_name LIKE '%${searchTerm}%' 
+            OR fees_type LIKE '%${searchTerm}%'  
+            OR description LIKE '%${searchTerm}%' 
+            OR create_date LIKE '%${searchTerm}%') AND user_id = 1  as user_count
+    FROM students_fees
+   
+    WHERE student_name LIKE '%${searchTerm}%' 
+        OR fees_type LIKE '%${searchTerm}%' 
+        OR description LIKE '%${searchTerm}%' 
+        OR create_date LIKE '%${searchTerm}%'
+    ORDER BY id DESC
+    LIMIT ${limit} OFFSET ${offset}
+`);
+
+    //     data = await db.query(`
+    //     SELECT DISTINCT *,  (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%'  OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%') as user_count
+    //     FROM students_fees
+    //     WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%'
+    //     ORDER BY id DESC
+    //     LIMIT ${limit} OFFSET ${offset}
+
+    // `);
+
+    // data = await db.query(`
+    // SELECT *,
+    //     (SELECT COUNT(*) FROM users WHERE (user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') AND user_role = 'student') as user_count,
+    //     (SELECT COUNT(*) FROM users WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') as total_count
+    // FROM users
+    // WHERE (user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') AND user_role = 'student'
+    // LIMIT ${limit} OFFSET ${offset}
+    //  `);
+
+    console.log("242424", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      //totalStudent: data[0].length,
+
+      user_count: data[0][0].user_count,
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
+      error,
+    });
+  }
+};
+const add_student_fees = async (req, res) => {
+  try {
+    const {
+      student_name,
+      create_time,
+      create_date,
+      total_fees,
+      installment_fees,
+      fees_type,
+      description,
+    } = req.body;
+    if (
+      !student_name ||
+      !create_time ||
+      !create_date ||
+      !total_fees ||
+      !installment_fees ||
+      !fees_type ||
+      !description
+    ) {
+      return res.status(500).send({
+        success: false,
+        messsage: "Please provide all fields",
+      });
+    }
+
+    const data = await db.query(
+      "INSERT INTO students_fees(student_name, create_time, create_date, total_fees,installment_fees, fees_type, description ) VALUES ( ?, ?, ?, ?, ?, ?, ? )",
+      [
+        student_name,
+        create_time,
+        create_date,
+        total_fees,
+        installment_fees,
+        fees_type,
+        description,
+      ]
+    );
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "erro in insert query",
+      });
+    }
+    res.status(201).send({
+      success: false,
+      messsage: "new student create record",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in create student api",
+      error,
+    });
+  }
+};
+
 module.exports = {
   getstudents,
   getstudentById,
@@ -574,5 +1526,20 @@ module.exports = {
   getassignment,
   register,
   addStudentAssignment,
+  addStudentAssignment1,
   getStudentAssignment,
+  getusersbyemail,
+  getusersbyemailregister,
+  getusers_byid,
+  getmyassignment,
+  getstudentassign_byid,
+  studentsassignment_remark,
+  search_studentassign,
+  search_viewassignment,
+  search_viewbatch,
+  search_attendace,
+  search_user,
+  search_user_students,
+  add_student_fees,
+  search_view_installment_fees,
 };

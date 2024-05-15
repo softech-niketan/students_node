@@ -38,20 +38,8 @@ const uploads = multer({
 
     filename: function (req, file, cb) {
       // const randomFilename = file.fieldname + "-" + Date.now() + +".jpg";
-      // cb(null, randomFilename); // Generate a random filename
 
-      // var imagename = file.get("user_file");
-
-      // if (imagename instanceof File) {
-      //   var fileName = imagename.lastModified;
-      //   console.log("File name:", fileName);
-      // } else {
-      //   console.error(
-      //     "No file found for the key 'user_file' in the FormData object."
-      //   );
-      // }
-
-      // console.log("filee", file);
+      console.log("filee", file);
       console.log(file.fieldname);
       cb(null, file.fieldname + "-" + file.originalname + ".jpg");
     },
