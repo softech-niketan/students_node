@@ -126,7 +126,7 @@ const update = async (req, res) => {
   //console.log(req);
   try {
     const ID = req.body.id;
-    console.log("ID", ID);
+    //console.log("ID", ID);
     if (!ID) {
       return res.status(404).send({
         success: false,
@@ -181,7 +181,7 @@ const studentsassignment_remark = async (req, res) => {
   //console.log(req);
   try {
     const ID = req.body.id;
-    console.log("ID", ID);
+    //console.log("ID", ID);
     if (!ID) {
       return res.status(404).send({
         success: false,
@@ -323,7 +323,7 @@ const addusers = async (req, res) => {
 };
 
 const getmyassignment = async (req, res) => {
-  console.log("register", req.query.id);
+  // console.log("register", req.query.id);
   try {
     const id = req.query.id;
 
@@ -454,7 +454,7 @@ const getusers_byid = async (req, res) => {
 };
 
 const getstudentassign_byid = async (req, res) => {
-  console.log("id", req);
+  // console.log("id", req);
   try {
     //id = "1";
     const data = await db.query(
@@ -704,7 +704,7 @@ const getassignment = async (req, res) => {
 //Add Register login
 const register = async (req, res) => {
   const email = req.body.email;
-  console.log(req.body.email);
+  // console.log(req.body.email);
   try {
     const {
       user_name,
@@ -749,7 +749,7 @@ const register = async (req, res) => {
       `${email}`
     );
 
-    console.log("emailExists", emailExists[0][0].email_count);
+    //("emailExists", emailExists[0][0].email_count);
     //  const countObj = emailExists[0][0]; // Accessing the first element of the first inner array
 
     // // Accessing the value of the key 'COUNT(*)' in the object
@@ -800,7 +800,7 @@ const register = async (req, res) => {
 };
 
 const register123 = async (req, res) => {
-  console.log(req.body.email);
+  // console.log(req.body.email);
   try {
     const {
       user_name,
@@ -886,7 +886,7 @@ const register123 = async (req, res) => {
 //get My Assignment
 const addStudentAssignment = async (req, res) => {
   //console.log(req);
-  console.log("iddds", req.params.id);
+  //console.log("iddds", req.params.id);
   try {
     const id = req.params.id;
     if (!id) {
@@ -919,7 +919,7 @@ const addStudentAssignment = async (req, res) => {
 //Add Students Assignment
 
 const addStudentAssignment1 = async (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   try {
     const {
       assignment_name,
@@ -1045,7 +1045,7 @@ const search_studentassign = async (req, res) => {
     LIMIT ${limit} OFFSET ${offset}
   `);
 
-    console.log("242424", data);
+    //console.log("242424", data);
 
     if (!data) {
       return res.status(404).send({
@@ -1374,49 +1374,81 @@ const search_view_installment_fees = async (req, res) => {
   //console.log("offset", req);
   try {
     const searchTerm = req.query.id;
-    // const searchTerm = "sk";
+
     const currentPage = req.query.currentPage;
     console.log("currentPage24", currentPage);
     const limit = req.query.input;
     const offset = (currentPage - 1) * limit;
 
-    //   const offset = "0";
-    console.log(offset);
-    console.log(limit);
-    console.log("searchTerm", searchTerm);
+    // console.log(offset);
+    // console.log(limit);
+    // console.log("searchTerm", searchTerm);
 
     // data = await db.query(`
     // SELECT  *, (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%'  OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%') as user_count
     // FROM students_fees
     // WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%'
+
     // LIMIT ${limit} OFFSET ${offset}
     // `);
-    data = await db.query(`
-    SELECT   *,
-        (SELECT COUNT(*) 
-         FROM students_fees 
-         WHERE student_name LIKE '%${searchTerm}%' 
-            OR fees_type LIKE '%${searchTerm}%'  
-            OR description LIKE '%${searchTerm}%' 
-            OR create_date LIKE '%${searchTerm}%') AND user_id = 1  as user_count
-    FROM students_fees
-   
-    WHERE student_name LIKE '%${searchTerm}%' 
-        OR fees_type LIKE '%${searchTerm}%' 
-        OR description LIKE '%${searchTerm}%' 
-        OR create_date LIKE '%${searchTerm}%'
-    ORDER BY id DESC
-    LIMIT ${limit} OFFSET ${offset}
-`);
 
     //     data = await db.query(`
+    //     SELECT DISTINCT(user_id),student_name,total_fees,create_date,
+    //     (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%'  OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%') as user_count
+    //     FROM students_fees
+    //     WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%'
+
+    //     LIMIT ${limit} OFFSET ${offset}
+    // `);
+    data = await db.query(`
+    SELECT  MIN(id) AS id, user_id, MAX(student_name) AS student_name, MAX(create_time) AS create_time, MAX(create_date) AS create_date, MAX(total_fees) AS total_fees, Max(installment_fees) AS installment_fees, MAX(fees_type) AS fees_type, MAX(description) AS description,  COUNT(*) OVER() AS user_count
+    FROM students_fees
+    WHERE student_name LIKE '%${searchTerm}%' 
+       OR fees_type LIKE '%${searchTerm}%'
+       OR description LIKE '%${searchTerm}%'
+       OR create_date LIKE '%${searchTerm}%'
+    GROUP BY user_id
+    LIMIT ${limit} OFFSET ${offset}
+    `);
+
+    //     data = await db.query(`
+    //     SELECT user_id, student_name, create_date, total_fees,installment_fees,
+    //            COUNT(*) OVER() as user_count
+    //     FROM students_fees
+    //     WHERE student_name LIKE '%${searchTerm}%'
+    //        OR fees_type LIKE '%${searchTerm}%'
+    //        OR description LIKE '%${searchTerm}%'
+    //        OR create_date LIKE '%${searchTerm}%'
+    //     GROUP BY user_id, student_name,create_date, total_fees, installment_fees
+    //     LIMIT ${limit} OFFSET ${offset}
+    // `);
+
+    // data = await db.query(`
+    // SELECT DISTINCT user_id,
+    //         (SELECT COUNT(*)
+    //          FROM students_fees
+    //          WHERE student_name LIKE '%${searchTerm}%'
+    //             OR fees_type LIKE '%${searchTerm}%'
+    //             OR description LIKE '%${searchTerm}%'
+    //             OR create_date LIKE '%${searchTerm}%')   as user_count
+    //     FROM students_fees
+
+    //     WHERE student_name LIKE '%${searchTerm}%'
+    //         OR fees_type LIKE '%${searchTerm}%'
+    //         OR description LIKE '%${searchTerm}%'
+    //         OR create_date LIKE '%${searchTerm}%'
+    //     ORDER BY id DESC
+    //     LIMIT ${limit} OFFSET ${offset}
+    // `);
+
+    // data = await db.query(`
     //     SELECT DISTINCT *,  (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%'  OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%') as user_count
     //     FROM students_fees
     //     WHERE student_name LIKE '%${searchTerm}%' OR fees_type LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%'
     //     ORDER BY id DESC
     //     LIMIT ${limit} OFFSET ${offset}
 
-    // `);
+    // // `);
 
     // data = await db.query(`
     // SELECT *,
@@ -1463,6 +1495,7 @@ const add_student_fees = async (req, res) => {
       installment_fees,
       fees_type,
       description,
+      user_id,
     } = req.body;
     if (
       !student_name ||
@@ -1471,7 +1504,8 @@ const add_student_fees = async (req, res) => {
       !total_fees ||
       !installment_fees ||
       !fees_type ||
-      !description
+      !description ||
+      !user_id
     ) {
       return res.status(500).send({
         success: false,
@@ -1480,7 +1514,7 @@ const add_student_fees = async (req, res) => {
     }
 
     const data = await db.query(
-      "INSERT INTO students_fees(student_name, create_time, create_date, total_fees,installment_fees, fees_type, description ) VALUES ( ?, ?, ?, ?, ?, ?, ? )",
+      "INSERT INTO students_fees(student_name, create_time, create_date, total_fees,installment_fees, fees_type, description, user_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )",
       [
         student_name,
         create_time,
@@ -1489,6 +1523,7 @@ const add_student_fees = async (req, res) => {
         installment_fees,
         fees_type,
         description,
+        user_id,
       ]
     );
     if (!data) {
@@ -1506,6 +1541,80 @@ const add_student_fees = async (req, res) => {
     res.status(500).send({
       success: false,
       messsage: "error in create student api",
+      error,
+    });
+  }
+};
+
+const search_students_fees_history = async (req, res) => {
+  //console.log("offset", req);
+  try {
+    const id = req.query.seg_id;
+    console.log("ididid", id);
+    const searchTerm = id;
+
+    const currentPage = req.query.currentPage;
+    const limit = req.query.input;
+    const offset = (currentPage - 1) * limit;
+
+    console.log(offset);
+    console.log(limit);
+    console.log("currentPage", currentPage);
+
+    // const data = await db.query(
+    //   `SELECT * FROM students_assignment WHERE  user_id = ${id} LIMIT ${limit} OFFSET ${offset}`
+    // );
+
+    // data = await db.query(`
+    // SELECT *, (SELECT COUNT(*) FROM students_fees WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%'  OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%') as user_count
+    // FROM students_fees
+    // WHERE user_name LIKE '%${searchTerm}%' OR class_name LIKE '%${searchTerm}%' OR date LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%'
+    // LIMIT ${limit} OFFSET ${offset}
+    // `);
+
+    // const data = await db.query(`SELECT * FROM students_fees WHERE id=?`, [id]);
+
+    // data = await db.query(`
+    // SELECT *,
+    //     (SELECT COUNT(*) FROM students_fees WHERE (student_name LIKE '%${searchTerm}%' OR total_fees LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%') AND user_id = ${id}) as user_count,
+    //     (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR total_fees LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%') as total_count
+    // FROM students_fees
+    // WHERE (student_name LIKE '%${searchTerm}%' OR total_fees LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%') AND user_id = ${id}
+    // LIMIT ${limit} OFFSET ${offset}
+    //  `);
+
+    data = await db.query(`
+    SELECT *, 
+        (SELECT COUNT(*) FROM students_fees WHERE (student_name LIKE '%${searchTerm}%' OR total_fees LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%') AND user_id = ${id}) as user_count,
+        (SELECT COUNT(*) FROM students_fees WHERE student_name LIKE '%${searchTerm}%' OR total_fees LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%') as total_count 
+    FROM students_fees 
+    WHERE (student_name LIKE '%${searchTerm}%' OR total_fees LIKE '%${searchTerm}%' OR create_date LIKE '%${searchTerm}%' OR description LIKE '%${searchTerm}%') AND user_id =  ${id}
+    LIMIT ${limit} OFFSET ${offset}
+     `);
+
+    console.log("*************", data);
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        messsage: "No record ",
+      });
+    }
+    res.status(200).send({
+      success: true,
+      messsage: "all student record2 ",
+      // totalStudent: data[0].length,
+
+      user_count: data[0][0].user_count,
+
+      totalCount: data[0][0].total_count,
+      data: data[0],
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "error in get all student api",
       error,
     });
   }
@@ -1542,4 +1651,5 @@ module.exports = {
   search_user_students,
   add_student_fees,
   search_view_installment_fees,
+  search_students_fees_history,
 };

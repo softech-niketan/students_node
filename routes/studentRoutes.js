@@ -30,6 +30,7 @@ const {
   search_user_students,
   add_student_fees,
   search_view_installment_fees,
+  search_students_fees_history,
 } = require("../controllers/studentcontroller");
 
 //router object
@@ -82,7 +83,6 @@ router.post("/register", register);
 
 router.post("/add_student_fees", add_student_fees);
 
-
 //Add Students Assignment
 router.get("/addStudentAssignment/:id", addStudentAssignment);
 
@@ -103,15 +103,14 @@ router.get("/search_viewassignment", search_viewassignment);
 
 router.get("/search_viewbatch", search_viewbatch);
 
-router.get("/search_attendace",search_attendace );
+router.get("/search_attendace", search_attendace);
 
-router.get("/search_view_installment_fees",search_view_installment_fees );
+router.get("/search_view_installment_fees", search_view_installment_fees);
 
+router.get("/search_user_students", search_user_students);
 
-router.get("/search_user_students",search_user_students );
+router.get("/search_user", search_user);
 
-
-
-
+router.get("/search_students_fees_history/:id", search_students_fees_history);
 
 module.exports = router;
